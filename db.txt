@@ -1,0 +1,49 @@
+-- Таблица клиентов (clients)
+CREATE TABLE IF NOT EXISTS public.clients (
+  id          SERIAL PRIMARY KEY,
+  full_name   VARCHAR(255)    NOT NULL,
+  phone       VARCHAR(20)     UNIQUE NOT NULL,
+  email       VARCHAR(255)    UNIQUE NOT NULL,
+  tariff      VARCHAR(100),
+  services    JSONB,
+  balance     NUMERIC(12,2)   NOT NULL DEFAULT 0.00,
+  debt        NUMERIC(12,2)   NOT NULL DEFAULT 0.00,
+  created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+
+-- Таблица заявок (tickets)
+CREATE TABLE IF NOT EXISTS public.tickets (
+  id              SERIAL PRIMARY KEY,
+  client_phone    VARCHAR(20)    NOT NULL,
+  subject         VARCHAR(255),
+  text            TEXT           NOT NULL,
+  channel         VARCHAR(50)    NOT NULL DEFAULT 'web',
+  category        VARCHAR(100),
+  status          VARCHAR(50)    NOT NULL DEFAULT 'new',
+  priority        VARCHAR(50)    NOT NULL DEFAULT 'normal',
+  ai_response     TEXT,
+  created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMP WITH TIME ZONE
+);
+
+-- Таблица платежей (payments)
+CREATE TABLE IF NOT EXISTS public.payments (
+  id          SERIAL PRIMARY KEY,
+  client_id   INTEGER        NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  amount      NUMERIC(12,2)  NOT NULL,
+  date        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  service     VARCHAR(100),
+  status      VARCHAR(50)    NOT NULL DEFAULT 'completed'
+);
+
+-- Таблица логов AI-операций (ai_logs)
+CREATE TABLE IF NOT EXISTS public.ai_logs (
+  id                SERIAL PRIMARY KEY,
+  ticket_id         INTEGER                 NOT NULL REFERENCES public.tickets(id) ON DELETE CASCADE,
+  action            VARCHAR(50)             NOT NULL,      -- например: 'classify' или 'generate_response'
+  request_payload   JSONB                   NOT NULL,
+  response_payload  JSONB                   NOT NULL,
+  confidence        NUMERIC(5,4),                         -- при желании хранить точность (0.0000–1.0000)
+  created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);

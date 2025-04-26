@@ -1,6 +1,6 @@
 // frontend-test/script.js
 
-// Базовый адрес вашего FastAPI
+// Базовый адрес FastAPI
 const API_BASE = "http://localhost:7000";
 
 // Ключ локального хранилища
