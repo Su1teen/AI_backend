@@ -1,9 +1,8 @@
-fastapi 
-uvicorn 
-sqlalchemy 
-psycopg2-binary 
-pydantic 
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
 python-dotenv
 pydantic<2
-"pydantic[email]"
-python-dotenv
+pydantic[email]

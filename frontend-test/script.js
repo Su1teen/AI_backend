@@ -194,3 +194,77 @@ async function loadPayments() {
     alert("Не удалось загрузить платежи");
   }
 }
+// --- AI Chat ---
+
+// Инициализация чата (очистка окна при открытии)
+function initChat() {
+  const chatWindow = document.getElementById("chat-window");
+  if (chatWindow) {
+    chatWindow.innerHTML = ''; // Очищаем старые сообщения
+  }
+}
+
+// Обработчик отправки сообщения в чат
+document.addEventListener("DOMContentLoaded", () => {
+  const chatForm = document.getElementById("chat-form");
+  if (chatForm) {
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage("Вы", text);
+      input.value = "";
+
+      appendMessage("AI", "Печатает...");
+
+      try {
+        const phone = localStorage.getItem(LS_PHONE);  // Берём номер телефона из localStorage
+        if (!phone) {
+          replaceLastMessage("Ошибка", "Не найден номер клиента, авторизуйтесь заново.");
+          return;
+        }
+
+        const res = await fetch(`${API_BASE}/api/ai/chat_with_db`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            client_phone: phone
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw data;
+
+        replaceLastMessage("AI", data.ai_message);
+      } catch (err) {
+        console.error("Ошибка общения с AI:", err);
+        replaceLastMessage("Ошибка", err.detail || err.message || "Не удалось получить ответ от AI");
+      }
+    });
+  }
+});
+
+// Добавляем сообщение в окно чата
+function appendMessage(author, text) {
+  const chatWindow = document.getElementById("chat-window");
+  const msg = document.createElement("div");
+  msg.innerHTML = `<strong>${author}:</strong> ${text}`;
+  msg.style.marginBottom = "0.5rem";
+  chatWindow.appendChild(msg);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+// Заменяем последнее сообщение
+function replaceLastMessage(author, text) {
+  const chatWindow = document.getElementById("chat-window");
+  const msgs = chatWindow.querySelectorAll("div");
+  if (msgs.length > 0) {
+    const lastMsg = msgs[msgs.length - 1];
+    lastMsg.innerHTML = `<strong>${author}:</strong> ${text}`;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+}
+

@@ -14,6 +14,7 @@
       <button data-view="submit-ticket-view">Новая заявка</button>
       <button data-view="tickets-view">Мои заявки</button>
       <button data-view="payments-view">Платежи</button>
+      <button data-view="ai-chat-view">AI Чат</button>
       <button id="logout-btn">Выход</button>
     </nav>
   </header>
@@ -84,7 +85,17 @@
         <tbody></tbody>
       </table>
     </section>
+    <section id="ai-chat-view" class="hidden">
+      <h2>AI Чат</h2>
+      <div id="chat-window" style="border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: auto; margin-bottom: 1rem; background: #fafafa;"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Введите сообщение..." required style="width: 80%;">
+        <button type="submit">Отправить</button>
+      </form>
+    </section>
+    
   </main>
+  
 
   <!-- Подключаем логику SPA -->
   <script src="script.js"></script>
