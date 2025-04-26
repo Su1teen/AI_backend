@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Клиентский портал</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Клиентский портал</h1>
+    <nav id="nav-bar" class="hidden">
+      <button data-view="dashboard-view">Dashboard</button>
+      <button data-view="submit-ticket-view">Новая заявка</button>
+      <button data-view="tickets-view">Мои заявки</button>
+      <button data-view="payments-view">Платежи</button>
+      <button id="logout-btn">Выход</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 1. Логин -->
+    <section id="login-view">
+      <h2>Войти по телефону</h2>
+      <form id="login-form">
+        <input type="tel" id="login-phone" placeholder="+7xxxxxxxxxx" required>
+        <button type="submit">Войти</button>
+      </form>
+    </section>
+
+    <!-- 2. Dashboard / Профиль -->
+    <section id="dashboard-view" class="hidden">
+      <h2>Профиль</h2>
+      <div id="profile-info">
+        <p><strong>ФИО:</strong> <span id="profile-name"></span></p>
+        <p><strong>Телефон:</strong> <span id="profile-phone"></span></p>
+        <p><strong>Тариф:</strong> <span id="profile-tariff"></span></p>
+        <p><strong>Услуги:</strong> <span id="profile-services"></span></p>
+        <p><strong>Баланс:</strong> <span id="profile-balance"></span> ₽</p>
+        <p><strong>Долг:</strong> <span id="profile-debt"></span> ₽</p>
+      </div>
+    </section>
+
+    <!-- 3. Подача новой заявки -->
+    <section id="submit-ticket-view" class="hidden">
+      <h2>Новая заявка</h2>
+      <form id="ticket-form">
+        <input type="text" id="ticket-subject" placeholder="Тема" required><br>
+        <textarea id="ticket-text" placeholder="Описание проблемы" required></textarea><br>
+        <button type="submit">Отправить заявку</button>
+      </form>
+      <div id="ticket-result"></div>
+    </section>
+
+    <!-- 4. Мои заявки -->
+    <section id="tickets-view" class="hidden">
+      <h2>Мои заявки</h2>
+      <table id="tickets-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Тема</th>
+            <th>Категория</th>
+            <th>Статус</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 5. История платежей -->
+    <section id="payments-view" class="hidden">
+      <h2>История платежей</h2>
+      <table id="payments-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Сумма, ₽</th>
+            <th>Услуга</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Подключаем логику SPA -->
+  <script src="script.js"></script>
+</body>
+</html>
