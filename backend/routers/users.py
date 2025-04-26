@@ -21,7 +21,7 @@ class UserResponse(BaseModel):
     phone: str
     email: str
     tariff: Optional[str]
-    services: Optional[List[str]]
+    services: Optional[dict]
     balance: Decimal
     debt: Decimal
     created_at: datetime

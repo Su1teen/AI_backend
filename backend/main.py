@@ -1,5 +1,7 @@
 # backend/main.py
-
+from dotenv import load_dotenv
+# Подставьте свою кодировку, если в .env остались русские символы
+load_dotenv(".env", encoding="utf-8")
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

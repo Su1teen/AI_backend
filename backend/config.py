@@ -3,7 +3,7 @@
 from typing import Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from urllib.parse import quote_plus
 class Settings(BaseSettings):
     # HTTP
     PORT: int = Field(7000, description="Порт HTTP-сервера")
@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL(self) -> str:
         return (
-            f"postgresql://{self.DB_USER}:"
-            f"{self.DB_PASSWORD}@"
+            f"postgresql://{quote_plus(self.DB_USER)}:"
+            f"{quote_plus(self.DB_PASSWORD)}@"
             f"{self.DB_HOST}:"
             f"{self.DB_PORT}/"
-            f"{self.DB_NAME}"
+            f"{quote_plus(self.DB_NAME)}"
         )
 
     # OpenAI
