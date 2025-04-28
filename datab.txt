@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
 -- ======================================
 CREATE TABLE IF NOT EXISTS public.tickets (
   id              SERIAL PRIMARY KEY,
-  client_id       INTEGER REFERENCES public.clients(id) ON DELETE CASCADE,
-  client_phone    VARCHAR(20) NOT NULL,
+  client_id       INTEGER NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE, -- обязательная связь с клиентом
   subject         VARCHAR(255),
   text            TEXT NOT NULL,
   channel         VARCHAR(50) NOT NULL DEFAULT 'web',
@@ -30,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.tickets (
   created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at      TIMESTAMP WITH TIME ZONE
 );
+
 
 -- ======================================
 -- 3. Таблица платежей (payments)
