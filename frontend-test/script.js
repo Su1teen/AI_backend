@@ -21,12 +21,13 @@ document.addEventListener("DOMContentLoaded", () => {
       showView(view);
     });
   });
-
+  navBar.querySelector("button[data-view='operator-view']")
+  .addEventListener("click", () => { loadOperator(); showView("operator-view"); });
   // Логика форм
   document.getElementById("logout-btn").addEventListener("click", logout);
   document.getElementById("login-form").addEventListener("submit", onLogin);
   document.getElementById("ticket-form").addEventListener("submit", onSubmitTicket);
-
+  document.getElementById("op-refresh").addEventListener("click", loadOperator);
   // Если уже залогинены — в профиль, иначе — в логин
   if (localStorage.getItem(LS_PHONE)) {
     setupAuthenticated();
@@ -99,17 +100,33 @@ async function loadProfile() {
     });
     const user = await res.json();
     if (!res.ok) throw user;
-    document.getElementById("profile-name").textContent = user.full_name;
-    document.getElementById("profile-phone").textContent = user.phone;
+
+    document.getElementById("profile-name").textContent   = user.full_name;
+    document.getElementById("profile-phone").textContent  = user.phone;
     document.getElementById("profile-tariff").textContent = user.tariff || "-";
-    document.getElementById("profile-services").textContent = (user.services || []).join(", ");
+
+    // Обработка services (JSON-объект вида {feature: boolean})
+    let servicesText = "-";
+    if (Array.isArray(user.services)) {
+      // на случай, если придёт массив
+      servicesText = user.services.join(", ");
+    } else if (user.services && typeof user.services === "object") {
+      servicesText = Object.entries(user.services)
+        .filter(([_, enabled]) => enabled)
+        .map(([name]) => name)
+        .join(", ");
+      if (!servicesText) servicesText = "-";
+    }
+    document.getElementById("profile-services").textContent = servicesText;
+
     document.getElementById("profile-balance").textContent = user.balance;
-    document.getElementById("profile-debt").textContent = user.debt;
+    document.getElementById("profile-debt").textContent    = user.debt;
   } catch (err) {
     console.error("Ошибка загрузки профиля:", err);
     alert("Не удалось загрузить профиль");
   }
 }
+
 
 // Отправка новой заявки
 async function onSubmitTicket(e) {
@@ -268,3 +285,72 @@ function replaceLastMessage(author, text) {
   }
 }
 
+
+async function loadOperator() {
+  const cat = document.getElementById("op-filter-category").value;
+  const st  = document.getElementById("op-filter-status").value;
+  const url = new URL(`${API_BASE}/api/operator/tickets`);
+  if (cat) url.searchParams.set("category", cat);
+  if (st)  url.searchParams.set("status", st);
+  const res = await fetch(url, { headers: authHeaders() });
+  const data = await res.json();
+  const tbody = document.querySelector("#operator-table tbody");
+  tbody.innerHTML = "";
+  data.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.id}</td>
+      <td>${t.subject||"-"}</td>
+      <td>${t.category||"-"}</td>
+      <td>${t.status}</td>
+      <td>${t.assigned_to||"-"}</td>
+      <td>${new Date(t.created_at).toLocaleString()}</td>
+      <td>
+        <button class="op-view" data-id="${t.id}">Открыть</button>
+      </td>`;
+    tbody.append(tr);
+  });
+  document.querySelectorAll(".op-view").forEach(btn =>
+    btn.addEventListener("click", () => openOperatorDetail(btn.dataset.id))
+  );
+}
+
+async function openOperatorDetail(id) {
+  document.getElementById("operator-detail").classList.remove("hidden");
+  // 1) история клиента
+  const resH = await fetch(`${API_BASE}/api/operator/tickets/${id}/history`, { headers: authHeaders() });
+  const hist = await resH.json();
+  document.getElementById("client-history").innerText =
+    JSON.stringify(hist, null, 2);
+
+  // 2) комментарии
+  const resC = await fetch(`${API_BASE}/api/operator/tickets/${id}/comments`, { headers: authHeaders() });
+  const comm = await resC.json();
+  const list = document.getElementById("comments-list");
+  list.innerHTML = comm.map(c => `<p><strong>${c.author}</strong>: ${c.text}</p>`).join("");
+
+  // 3) отправка комментариев
+  const form = document.getElementById("comment-form");
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const author = document.getElementById("comment-author").value;
+    const text   = document.getElementById("comment-text").value;
+    await fetch(`${API_BASE}/api/operator/tickets/${id}/comments`, {
+      method: "POST",
+      headers: {...authHeaders(), "Content-Type":"application/json"},
+      body: JSON.stringify({author, text})
+    });
+    form.reset();
+    openOperatorDetail(id);
+  };
+
+  // 4) генерация и рассылка ответа
+  document.getElementById("generate-and-send").onclick = async () => {
+    const resp = await fetch(`${API_BASE}/api/tickets/${id}/send_response`, {
+      method: "POST", headers: authHeaders()
+    });
+    const data = await resp.json();
+    document.getElementById("ai-response").innerText = data.ai_response;
+    alert(data.message);
+  };
+}

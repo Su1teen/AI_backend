@@ -15,6 +15,7 @@
       <button data-view="tickets-view">Мои заявки</button>
       <button data-view="payments-view">Платежи</button>
       <button data-view="ai-chat-view">AI Чат</button>
+      <button data-view="operator-view">Панель оператора</button>
       <button id="logout-btn">Выход</button>
     </nav>
   </header>
@@ -85,6 +86,8 @@
         <tbody></tbody>
       </table>
     </section>
+
+
     <section id="ai-chat-view" class="hidden">
       <h2>AI Чат</h2>
       <div id="chat-window" style="border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: auto; margin-bottom: 1rem; background: #fafafa;"></div>
@@ -94,7 +97,53 @@
       </form>
     </section>
     
-  </main>
+  <section id="operator-view" class="hidden">
+    <h2>Панель оператора</h2>
+    <div class="filters">
+      <label>Категория:
+        <select id="op-filter-category">
+          <option value="">Все</option>
+          <option>подключение</option>
+          <option>инцидент</option>
+          <option>жалоба</option>
+          <option>информация</option>
+        </select>
+      </label>
+      <label>Статус:
+        <select id="op-filter-status">
+          <option value="">Все</option>
+          <option>new</option>
+          <option>in_progress</option>
+          <option>closed</option>
+        </select>
+      </label>
+      <button id="op-refresh">Обновить</button>
+    </div>
+    <table id="operator-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Тема</th><th>Категория</th><th>Статус</th>
+          <th>Исполнитель</th><th>Дата</th><th>Действия</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="operator-detail" class="hidden">
+      <h3>Детали заявки</h3>
+      <div id="client-history"></div>
+      <h4>Комментарии</h4>
+      <div id="comments-list"></div>
+      <form id="comment-form">
+        <input type="text" id="comment-author" placeholder="Ваше имя" required>
+        <textarea id="comment-text" placeholder="Текст комментария" required></textarea>
+        <button type="submit">Добавить комментарий</button>
+      </form>
+      <button id="generate-and-send">Сгенерировать и отправить ответ</button>
+      <pre id="ai-response"></pre>
+    </div>
+  </section>
+</main>
+  
   
 
   <!-- Подключаем логику SPA -->

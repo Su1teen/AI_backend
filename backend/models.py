@@ -46,10 +46,24 @@ class Ticket(Base):
     ai_response = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
-
+    assigned_to = Column(String(100), nullable=True)
     # Связи
     client = relationship("Client", back_populates="tickets")
     ai_logs = relationship("AILog", back_populates="ticket")
+    comments = relationship("Comment", back_populates="ticket")
+
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=False)
+    author = Column(String(100), nullable=False)
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    ticket = relationship("Ticket", back_populates="comments")
+
 
 
 class Payment(Base):

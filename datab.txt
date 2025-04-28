@@ -140,3 +140,50 @@ VALUES
 (14, 'generate_response', '{"text": "Долг по счету"}', '{"response": "Пожалуйста, внесите оплату в ближайшее время, чтобы избежать приостановки услуг"}', 0.89, NOW()),
 (15, 'classify', '{"text": "Запрос по списанию средств"}', '{"category": "информация"}', 0.88, NOW());
 
+-- ======================================
+-- 9. Дополнительные клиенты (clients)
+-- ======================================
+INSERT INTO public.clients (full_name, phone, email, tariff, services, balance, debt, created_at)
+VALUES
+  ('Кристина Иванова',    '+77010101010', 'kristina@mail.com', 'Premium Plan',  '{"mobile_internet": true, "cable_tv": true, "home_phone": true}', 4000.00, 0.00, NOW()),
+  ('Сергей Петров',       '+77020202020', 'sergey@mail.com',    'Standard Plan', '{"mobile_internet": true}',                                    1200.00, 100.00, NOW()),
+  ('Марина Смирнова',     '+77030303030', 'marina@mail.com',    'Economy Plan',   '{"mobile_internet": true}',                                    300.00, 50.00, NOW()),
+  ('Алексей Кузнецов',    '+77040404040', 'aleksey@mail.com',   'Premium Plan',   '{"mobile_internet": true, "cable_tv": true}',                     5500.00, 200.00, NOW()),
+  ('Виктория Орлова',     '+77050505050', 'viktoria@mail.com',  'Standard Plan', '{"mobile_internet": true, "home_phone": true}',                 1800.00, 0.00, NOW()
+);
+
+-- ======================================
+-- 10. Дополнительные платежи (payments)
+-- ======================================
+INSERT INTO public.payments (client_id, amount, date, service, status)
+VALUES
+  (16, 4000.00, NOW(), 'Mobile Internet, Cable TV, Home Phone', 'completed'),
+  (17, 1200.00, NOW(), 'Mobile Internet',                     'completed'),
+  (18, 300.00,  NOW(), 'Mobile Internet',                     'completed'),
+  (19, 5500.00, NOW(), 'Mobile Internet, Cable TV',           'failed'),
+  (20, 1800.00, NOW(), 'Mobile Internet, Home Phone',         'completed'
+);
+
+-- ======================================
+-- 11. Дополнительные заявки (tickets)
+-- ======================================
+INSERT INTO public.tickets (client_phone, subject, text, channel, category, status, priority, ai_response, created_at, updated_at)
+VALUES
+  ('+77010101010', 'Проблемы с оплатой',         'Платеж не прошел через терминал.',         'web',   'инцидент',     'in_progress', 'high',   'Пожалуйста, проверьте карту и попробуйте снова', NOW(), NOW()),
+  ('+77020202020', 'Запрос на дубликат счета',    'Нужен дубликат счета за прошлый месяц.',    'email', 'информация',   'new',         'low',    'Дубликат счета выслан на ваш email',            NOW(), NOW()),
+  ('+77030303030', 'Жалоба на качество связи',    'В доме нет покрытия.',                     'web',   'жалоба',       'new',         'high',   'Проверяем зону покрытия в вашем районе',         NOW(), NOW()),
+  ('+77040404040', 'Обновление тарифного плана',  'Хочу перейти на экономный тариф.',         'web',   'информация',   'new',         'normal', 'Ваш переход запланирован и будет выполнен завтра', NOW(), NOW()),
+  ('+77050505050', 'Техническая поддержка ТВ',    'Не работает цифровое телевидение.',         'email', 'инцидент',     'in_progress', 'high',   'Инженер выехал к вам, ожидайте через 2 часа',    NOW(), NOW()
+);
+
+-- ======================================
+-- 12. Дополнительные логи AI (ai_logs)
+-- ======================================
+INSERT INTO public.ai_logs (ticket_id, action, request_payload, response_payload, confidence, created_at)
+VALUES
+  (16, 'classify',         '{"text": "Проблемы с оплатой"}',           '{"category": "инцидент"}',              0.96, NOW()),
+  (17, 'generate_response','{"text": "Запрос на дубликат счета"}',    '{"response": "Дубликат счета отправлен вам на почту"}', 0.89, NOW()),
+  (18, 'classify',         '{"text": "Жалоба на качество связи"}',    '{"category": "жалоба"}',                0.94, NOW()),
+  (19, 'generate_response','{"text": "Обновление тарифного плана"}', '{"response": "Переход на новый тариф запланирован"}',  0.90, NOW()),
+  (20, 'classify',         '{"text": "Техническая поддержка цифрового ТВ"}', '{"category": "инцидент"}',          0.92, NOW()
+);

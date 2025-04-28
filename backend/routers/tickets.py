@@ -1,13 +1,13 @@
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, BackgroundTasks
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
+import smtplib, email
 from ..services.db import get_db
 from ..services import ai_classifier
 from ..models import Ticket, AILog
-
+from ..config import settings
 router = APIRouter(
     prefix="/api/tickets",
     tags=["tickets"],
@@ -178,3 +178,34 @@ def generate_response(
     db.commit()
 
     return {"ai_response": ai_resp}
+
+@router.post("/{ticket_id}/send_response", summary="Сгенерировать + отправить ответ")
+def respond_and_notify(
+    ticket_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    ticket = db.get(Ticket, ticket_id)
+    if not ticket:
+        raise HTTPException(404, "Заявка не найдена")
+
+    # 1) Генерим AI-ответ
+    answer = ai_classifier.generate_response(ticket.text)
+    ticket.ai_response = answer
+    db.commit()
+
+    # 2) Отправляем email в фоне
+    def send_mail(to_address: str, subject: str, body: str):
+        msg = email.message.EmailMessage()
+        msg["From"] = settings.EMAIL_USER
+        msg["To"]   = to_address
+        msg["Subject"] = f"Ответ по заявке #{ticket.id}"
+        msg.set_content(body)
+        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+            smtp.send_message(msg)
+
+    background_tasks.add_task(send_mail, ticket.client.email, f"Ответ на заявку #{ticket.id}", answer)
+    return {"ai_response": answer, "message": "Ответ сгенерирован и отправляется клиенту"}
+

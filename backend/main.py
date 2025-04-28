@@ -17,7 +17,7 @@ from .routers.users import router as users_router
 from .routers.tickets import router as tickets_router
 from .routers.payments import router as payments_router
 from .routers.ai_chat import router as ai_chat_router
-
+from .routers.operator import router as operator_router
 app = FastAPI(
     title="Digital Client Portal",
     version="0.1.0",
@@ -44,7 +44,7 @@ app.include_router(users_router)
 app.include_router(tickets_router)
 app.include_router(payments_router)
 app.include_router(ai_chat_router)  # <--- добавили
-
+app.include_router(operator_router)
 if __name__ == "__main__":
     uvicorn.run(
         "backend.main:app",

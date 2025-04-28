@@ -69,7 +69,7 @@ async def chat_with_ai_and_db(payload: ExtendedChatRequest, db: Session = Depend
         )
 
         response = client_ai.chat.completions.create(  # ✅ Новый вызов
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Отвечай вежливо, кратко и по делу."},
                 {"role": "user", "content": prompt}
