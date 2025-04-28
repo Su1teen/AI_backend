@@ -63,19 +63,11 @@ def create_ticket(
     payload: TicketCreate,
     db: Session = Depends(get_db)
 ):
-    # Fetch client_id based on client_phone (you need to implement the logic)
-    client = db.query(Client).filter(Client.phone == payload.client_phone).first()
-    if not client:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-    
-    client_id = client.id
-
     # Классификация
     category = ai_classifier.classify_text(payload.text)
 
     # Сохраняем тикет
     ticket = Ticket(
-        client_id=client_id,
         client_phone=payload.client_phone,
         subject=payload.subject,
         text=payload.text,
