@@ -36,7 +36,7 @@ def generate_response(text: str) -> str:
     Генерирует вежливый ответ на обращение клиента.
     """
     try:
-        resp = openai.ChatCompletion.create(
+        resp = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             temperature=0.7,
             messages=[
