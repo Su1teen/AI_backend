@@ -5,10 +5,12 @@ from ..config import settings
 # Устанавливаем ключ
 openai.api_key = settings.OPENAI_API_KEY
 
+ALLOWED_CATEGORIES = {"подключение", "инцидент", "жалоба", "информация"}
+
 def classify_text(text: str) -> str:
     """
     Отправляет в OpenAI запрос на классификацию обращения.
-    Возвращает категорию (e.g. 'жалоба', 'инцидент' и т.п.).
+    Возвращает одну из 4 категорий: 'подключение', 'инцидент', 'жалоба', 'информация'.
     """
     try:
         resp = openai.chat.completions.create(
@@ -18,14 +20,21 @@ def classify_text(text: str) -> str:
                 {
                     "role": "system",
                     "content": (
-                        "Ты — классификатор обращений телеком-портала. "
-                        "Категории: подключение, инцидент, жалоба, информация."
+                        "Ты — классификатор обращений клиентского портала. "
+                        "Ответь только ОДНИМ словом, без пояснений: "
+                        "подключение, инцидент, жалоба или информация. "
+                        "Только одно слово из этого списка."
                     )
                 },
                 {"role": "user", "content": text}
             ]
         )
-        category = resp.choices[0].message.content.strip()
+        category = resp.choices[0].message.content.strip().lower()
+
+        # Проверка на допустимые значения
+        if category not in ALLOWED_CATEGORIES:
+            raise ValueError(f"Unexpected category from AI: {category}")
+
         return category
     except Exception as e:
         # пробросим как HTTP-ошибку для FastAPI
