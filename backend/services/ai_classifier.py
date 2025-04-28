@@ -11,7 +11,7 @@ def classify_text(text: str) -> str:
     Возвращает категорию (e.g. 'жалоба', 'инцидент' и т.п.).
     """
     try:
-        resp = openai.ChatCompletion.create(
+        resp = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             temperature=0,
             messages=[
