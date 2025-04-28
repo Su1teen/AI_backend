@@ -17,10 +17,12 @@ router = APIRouter(
 # Pydantic-схемы
 # ----------------------------
 class TicketCreate(BaseModel):
+    client_id: Optional[int] = Field(None, example=1)  # Assuming client_id is an integer
     client_phone: str = Field(..., example="+71234567890")
     subject: Optional[str] = Field(None, example="Проблема с интернетом")
     text: str = Field(..., example="Нет доступа к Wi-Fi с 10 утра")
     channel: Optional[str] = Field("web", example="web")
+
 
 
 class TicketResponse(BaseModel):
@@ -56,15 +58,24 @@ class TicketDetail(TicketResponse):
     status_code=status.HTTP_201_CREATED,
     summary="Создать новую заявку с AI-классификацией"
 )
+
 def create_ticket(
     payload: TicketCreate,
     db: Session = Depends(get_db)
 ):
+    # Fetch client_id based on client_phone (you need to implement the logic)
+    client = db.query(Client).filter(Client.phone == payload.client_phone).first()
+    if not client:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+    
+    client_id = client.id
+
     # Классификация
     category = ai_classifier.classify_text(payload.text)
 
     # Сохраняем тикет
     ticket = Ticket(
+        client_id=client_id,
         client_phone=payload.client_phone,
         subject=payload.subject,
         text=payload.text,
@@ -87,6 +98,7 @@ def create_ticket(
     db.commit()
 
     return ticket
+
 
 
 @router.get(
