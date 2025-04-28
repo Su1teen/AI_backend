@@ -1,4 +1,6 @@
--- Таблица клиентов (clients)
+-- ======================================
+-- 1. Таблица клиентов (clients)
+-- ======================================
 CREATE TABLE IF NOT EXISTS public.clients (
   id          SERIAL PRIMARY KEY,
   full_name   VARCHAR(255)    NOT NULL,
@@ -11,43 +13,52 @@ CREATE TABLE IF NOT EXISTS public.clients (
   created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
-
--- Таблица заявок (tickets)
+-- ======================================
+-- 2. Таблица заявок (tickets)
+-- ======================================
 CREATE TABLE IF NOT EXISTS public.tickets (
   id              SERIAL PRIMARY KEY,
-  client_phone    VARCHAR(20)    NOT NULL,
+  client_id       INTEGER REFERENCES public.clients(id) ON DELETE CASCADE,
+  client_phone    VARCHAR(20) NOT NULL,
   subject         VARCHAR(255),
-  text            TEXT           NOT NULL,
-  channel         VARCHAR(50)    NOT NULL DEFAULT 'web',
+  text            TEXT NOT NULL,
+  channel         VARCHAR(50) NOT NULL DEFAULT 'web',
   category        VARCHAR(100),
-  status          VARCHAR(50)    NOT NULL DEFAULT 'new',
-  priority        VARCHAR(50)    NOT NULL DEFAULT 'normal',
+  status          VARCHAR(50) NOT NULL DEFAULT 'new',
+  priority        VARCHAR(50) NOT NULL DEFAULT 'normal',
   ai_response     TEXT,
   created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at      TIMESTAMP WITH TIME ZONE
 );
 
--- Таблица платежей (payments)
+-- ======================================
+-- 3. Таблица платежей (payments)
+-- ======================================
 CREATE TABLE IF NOT EXISTS public.payments (
   id          SERIAL PRIMARY KEY,
-  client_id   INTEGER        NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  client_id   INTEGER NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
   amount      NUMERIC(12,2)  NOT NULL,
   date        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   service     VARCHAR(100),
   status      VARCHAR(50)    NOT NULL DEFAULT 'completed'
 );
 
--- Таблица логов AI-операций (ai_logs)
+-- ======================================
+-- 4. Таблица логов AI (ai_logs)
+-- ======================================
 CREATE TABLE IF NOT EXISTS public.ai_logs (
   id                SERIAL PRIMARY KEY,
-  ticket_id         INTEGER                 NOT NULL REFERENCES public.tickets(id) ON DELETE CASCADE,
-  action            VARCHAR(50)             NOT NULL,      -- например: 'classify' или 'generate_response'
-  request_payload   JSONB                   NOT NULL,
-  response_payload  JSONB                   NOT NULL,
-  confidence        NUMERIC(5,4),                         -- при желании хранить точность (0.0000–1.0000)
+  ticket_id         INTEGER NOT NULL REFERENCES public.tickets(id) ON DELETE CASCADE,
+  action            VARCHAR(50) NOT NULL,
+  request_payload   JSONB       NOT NULL,
+  response_payload  JSONB       NOT NULL,
+  confidence        NUMERIC(5,4),
   created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
+-- ======================================
+-- 5. Вставка клиентов (clients)
+-- ======================================
 INSERT INTO public.clients (full_name, phone, email, tariff, services, balance, debt, created_at)
 VALUES
 ('Айгуль Тлегенова', '+77011234567', 'aygul@gmail.com', 'Standard Plan', '{"mobile_internet": true, "cable_tv": true}', 1500.00, 0.00, NOW()),
@@ -64,25 +75,11 @@ VALUES
 ('Данияр Романов', '+77097788999', 'daniyar@gmail.com', 'Economy Plan', '{"mobile_internet": true}', 800.00, 200.00, NOW()),
 ('Нуржан Левин', '+77098899000', 'nurjan@gmail.com', 'Standard Plan', '{"cable_tv": true, "home_phone": true}', 2200.00, 0.00, NOW()),
 ('Аружан Лазарева', '+77099998888', 'aruzhan@gmail.com', 'Premium Plan', '{"mobile_internet": true, "cable_tv": true}', 4600.00, 150.00, NOW()),
-('Ермек Климов', '+77097777777', 'ermek@gmail.com', 'Economy Plan', '{"mobile_internet": true}', 1200.00, 400.00, NOW()); -- Вставка 15 строк для таблицы логов AI с казахскими номерами
-INSERT INTO public.ai_logs (ticket_id, action, request_payload, response_payload, confidence, created_at)
-VALUES
-(1, 'classify', '{"text": "Проблемы с интернетом и Wi-Fi"}', '{"category": "инцидент"}', 0.95, NOW()),
-(2, 'generate_response', '{"text": "Жалоба на качество связи"}', '{"response": "Спасибо за обратную связь, мы разберемся в вашем вопросе"}', 0.92, NOW()),
-(3, 'classify', '{"text": "Вопрос по тарифу"}', '{"category": "информация"}', 0.90, NOW()),
-(4, 'generate_response', '{"text": "Проблемы с подключением услуги"}', '{"response": "Ваш запрос на подключение был принят и обрабатывается"}', 0.91, NOW()),
-(5, 'classify', '{"text": "Запрос на отключение услуги"}', '{"category": "информация"}', 0.85, NOW()),
-(6, 'generate_response', '{"text": "Проблемы с ТВ"}', '{"response": "Мы проверяем оборудование, ваша заявка в процессе"}', 0.93, NOW()),
-(7, 'classify', '{"text": "Запрос на изменение тарифа"}', '{"category": "информация"}', 0.88, NOW()),
-(8, 'generate_response', '{"text": "Не могу войти в аккаунт"}', '{"response": "Ваш запрос в обработке, пожалуйста, ожидайте восстановления доступа"}', 0.87, NOW()),
-(9, 'classify', '{"text": "Вопрос по платежам"}', '{"category": "информация"}', 0.86, NOW()),
-(10, 'generate_response', '{"text": "Смена тарифного плана"}', '{"response": "Тариф будет изменен в ближайшее время. Ожидайте уведомления"}', 0.92, NOW()),
-(11, 'classify', '{"text": "Проблемы с интернетом"}', '{"category": "инцидент"}', 0.94, NOW()),
-(12, 'generate_response', '{"text": "Запрос на возврат средств"}', '{"response": "Ваш запрос на возврат средств принят. Ожидайте ответа"}', 0.90, NOW()),
-(13, 'classify', '{"text": "Невозможность смены тарифа"}', '{"category": "информация"}', 0.83, NOW()),
-(14, 'generate_response', '{"text": "Долг по счету"}', '{"response": "Пожалуйста, внесите оплату в ближайшее время, чтобы избежать приостановки услуг"}', 0.89, NOW()),
-(15, 'classify', '{"text": "Запрос по списанию средств"}', '{"category": "информация"}', 0.88, NOW());
- -- Вставка 15 строк для таблицы платежей с казахскими номерами
+('Ермек Климов', '+77097777777', 'ermek@gmail.com', 'Economy Plan', '{"mobile_internet": true}', 1200.00, 400.00, NOW());
+
+-- ======================================
+-- 6. Вставка платежей (payments)
+-- ======================================
 INSERT INTO public.payments (client_id, amount, date, service, status)
 VALUES
 (1, 1500.00, NOW(), 'Mobile Internet', 'completed'),
@@ -99,7 +96,11 @@ VALUES
 (12, 3000.00, NOW(), 'Mobile Internet, Cable TV', 'completed'),
 (13, 400.00, NOW(), 'Mobile Internet', 'failed'),
 (14, 1500.00, NOW(), 'Cable TV', 'completed'),
-(15, 1500.00, NOW(), 'Mobile Internet', 'completed'); -- Вставка 15 строк для таблицы заявок с казахскими номерами
+(15, 1500.00, NOW(), 'Mobile Internet', 'completed');
+
+-- ======================================
+-- 7. Вставка заявок (tickets)
+-- ======================================
 INSERT INTO public.tickets (client_phone, subject, text, channel, category, status, priority, ai_response, created_at, updated_at)
 VALUES
 ('+77011234567', 'Интернет не работает', 'Нет доступа к Wi-Fi с 10 утра', 'web', 'инцидент', 'new', 'normal', 'Проблемы с интернет-соединением', NOW(), NOW()),
@@ -117,3 +118,25 @@ VALUES
 ('+77098899000', 'Проблемы с подключением интернета', 'Мобильный интернет работает нестабильно.', 'web', 'инцидент', 'in_progress', 'normal', 'Мы проверяем вашу линию. Проблемы будут решены в течение 2 часов.', NOW(), NOW()),
 ('+77099998888', 'Проблемы с подключением кабельного телевидения', 'Не работает телевидение на новых каналах.', 'email', 'инцидент', 'new', 'normal', 'Технические работы на вашем канале, ожидайте восстановления услуги.', NOW(), NOW()),
 ('+77097777777', 'Жалоба на несанкционированные списания', 'Списана сумма, которую я не ожидал.', 'web', 'жалоба', 'closed', 'high', 'Мы расследуем данное дело, списания будут возвращены.', NOW(), NOW());
+
+-- ======================================
+-- 8. Вставка логов AI (ai_logs)
+-- ======================================
+INSERT INTO public.ai_logs (ticket_id, action, request_payload, response_payload, confidence, created_at)
+VALUES
+(1, 'classify', '{"text": "Проблемы с интернетом и Wi-Fi"}', '{"category": "инцидент"}', 0.95, NOW()),
+(2, 'generate_response', '{"text": "Жалоба на качество связи"}', '{"response": "Спасибо за обратную связь, мы разберемся в вашем вопросе"}', 0.92, NOW()),
+(3, 'classify', '{"text": "Вопрос по тарифу"}', '{"category": "информация"}', 0.90, NOW()),
+(4, 'generate_response', '{"text": "Проблемы с подключением услуги"}', '{"response": "Ваш запрос на подключение был принят и обрабатывается"}', 0.91, NOW()),
+(5, 'classify', '{"text": "Запрос на отключение услуги"}', '{"category": "информация"}', 0.85, NOW()),
+(6, 'generate_response', '{"text": "Проблемы с ТВ"}', '{"response": "Мы проверяем оборудование, ваша заявка в процессе"}', 0.93, NOW()),
+(7, 'classify', '{"text": "Запрос на изменение тарифа"}', '{"category": "информация"}', 0.88, NOW()),
+(8, 'generate_response', '{"text": "Не могу войти в аккаунт"}', '{"response": "Ваш запрос в обработке, пожалуйста, ожидайте восстановления доступа"}', 0.87, NOW()),
+(9, 'classify', '{"text": "Вопрос по платежам"}', '{"category": "информация"}', 0.86, NOW()),
+(10, 'generate_response', '{"text": "Смена тарифного плана"}', '{"response": "Тариф будет изменен в ближайшее время. Ожидайте уведомления"}', 0.92, NOW()),
+(11, 'classify', '{"text": "Проблемы с интернетом"}', '{"category": "инцидент"}', 0.94, NOW()),
+(12, 'generate_response', '{"text": "Запрос на возврат средств"}', '{"response": "Ваш запрос на возврат средств принят. Ожидайте ответа"}', 0.90, NOW()),
+(13, 'classify', '{"text": "Невозможность смены тарифа"}', '{"category": "информация"}', 0.83, NOW()),
+(14, 'generate_response', '{"text": "Долг по счету"}', '{"response": "Пожалуйста, внесите оплату в ближайшее время, чтобы избежать приостановки услуг"}', 0.89, NOW()),
+(15, 'classify', '{"text": "Запрос по списанию средств"}', '{"category": "информация"}', 0.88, NOW());
+
