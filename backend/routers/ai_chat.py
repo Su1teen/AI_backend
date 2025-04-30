@@ -27,58 +27,54 @@ router = APIRouter(
 @router.post(
     "/chat_with_db",
     response_model=ExtendedChatResponse,
-    summary="Общение с AI + доступ к данным клиента"
+    summary="Персонализированный чат с доступом к данным"
 )
 async def chat_with_ai_and_db(payload: ExtendedChatRequest, db: Session = Depends(get_db)):
     try:
-        # 1. Найти клиента
+        # 1. Получаем данные клиента
         client = db.query(Client).filter(Client.phone == payload.client_phone).first()
         if not client:
             raise HTTPException(status_code=404, detail="Клиент не найден")
 
-        # 2. Найти его заявки
-        tickets = db.query(Ticket).filter(Ticket.client_phone == payload.client_phone).order_by(Ticket.created_at.desc()).limit(5).all()
-
-        # 3. Найти его платежи
-        payments = db.query(Payment).filter(Payment.client_id == client.id).order_by(Payment.date.desc()).limit(5).all()
-
-        # 4. Составить краткую информацию для AI
-        client_info = (
-            f"Имя: {client.full_name}, "
-            f"Тариф: {client.tariff or '-'}, "
-            f"Баланс: {client.balance}₸, "
-            f"Долг: {client.debt}₸"
-        )
-
-        recent_tickets = "\n".join(
-            f"Заявка #{t.id}: {t.subject or 'Без темы'}, статус: {t.status}" for t in tickets
-        ) or "Нет заявок"
-
-        recent_payments = "\n".join(
-            f"Платёж: {p.amount}₸ за {p.service or 'услугу'}, статус: {p.status}" for p in payments
-        ) or "Нет платежей"
-
-        # 5. Формируем промпт для AI
+        # 2. Формируем персонализированный промпт
         prompt = (
-            f"Ты помощник клиентского портала.\n"
-            f"Информация о клиенте:\n{client_info}\n\n"
-            f"Последние заявки:\n{recent_tickets}\n\n"
-            f"Последние платежи:\n{recent_payments}\n\n"
-            f"Вопрос клиента: {payload.message}\n"
-            f"Ответь, основываясь на этих данных."
+            f"Ты - персональный ассистент клиента {client.full_name} в сервисном портале.\n"
+            f"Информация о клиенте:\n"
+            f"- Имя: {client.full_name}\n"
+            f"- Тариф: {client.tariff or 'не указан'}\n"
+            f"- Баланс: {client.balance}₸\n"
+            f"- Долг: {client.debt}₸\n\n"
+            
+            f"Отвечай на русском языке, будь вежливым и профессиональным.\n"
+            f"Если клиент спрашивает о балансе или платежах, уточняй конкретные цифры.\n"
+            f"Если вопрос про заявки, проверяй их статус.\n\n"
+            f"Вопрос клиента: {payload.message}"
         )
 
-        response = client_ai.chat.completions.create(  # ✅ Новый вызов
-            model="gpt-4o-mini",
+        # 3. Получаем ответ от AI
+        response = client_ai.chat.completions.create(
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": "Отвечай вежливо, кратко и по делу."},
+                {
+                    "role": "system", 
+                    "content": (
+                        "Ты персональный ассистент сервисного портала. "
+                        "Отвечай кратко и по делу на русском языке. "
+                        "Используй только факты из предоставленных данных."
+                    )
+                },
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.5
+            temperature=0.3,
+            max_tokens=256
         )
 
+        # 4. Возвращаем ответ
         ai_message = response.choices[0].message.content.strip()
         return ExtendedChatResponse(ai_message=ai_message)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI chat with DB error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка AI-ассистента: {str(e)}"
+        )

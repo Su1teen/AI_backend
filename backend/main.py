@@ -18,6 +18,9 @@ from .routers.tickets import router as tickets_router
 from .routers.payments import router as payments_router
 from .routers.ai_chat import router as ai_chat_router
 from .routers.operator import router as operator_router
+
+import os
+
 app = FastAPI(
     title="Digital Client Portal",
     version="0.1.0",
@@ -28,10 +31,14 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:3000",  # Add your React dev server URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]  # Important for custom headers like x-client-phone
 )
 
 @app.on_event("startup")
@@ -45,6 +52,7 @@ app.include_router(tickets_router)
 app.include_router(payments_router)
 app.include_router(ai_chat_router)  # <--- добавили
 app.include_router(operator_router)
+
 if __name__ == "__main__":
     uvicorn.run(
         "backend.main:app",
