@@ -56,37 +56,52 @@ class TicketDetail(TicketResponse):
     "",
     response_model=TicketResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Создать новую заявку с AI-классификацией"
+    summary="Create new ticket with AI classification and response"
 )
-
 def create_ticket(
     payload: TicketCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    # Классификация
+    # Classification
     category = ai_classifier.classify_text(payload.text)
-
-    # Сохраняем тикет
+    
+    # Create ticket
     ticket = Ticket(
         client_phone=payload.client_phone,
         subject=payload.subject,
         text=payload.text,
         channel=payload.channel,
-        category=category
+        category=category,
+        status="new"
     )
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
 
-    # Логируем AI-действие
-    ai_log = AILog(
+    # Generate AI response
+    ai_resp = ai_classifier.generate_response(payload.text)
+    ticket.ai_response = ai_resp
+    db.commit()
+
+    # Log both actions
+    ai_log_classify = AILog(
         ticket_id=ticket.id,
         action="classify",
         request_payload={"text": payload.text},
         response_payload={"category": category},
         confidence=None
     )
-    db.add(ai_log)
+    
+    ai_log_response = AILog(
+        ticket_id=ticket.id,
+        action="generate_response",
+        request_payload={"text": payload.text},
+        response_payload={"response": ai_resp},
+        confidence=None
+    )
+    
+    db.add_all([ai_log_classify, ai_log_response])
     db.commit()
 
     return ticket
